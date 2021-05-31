@@ -1,0 +1,35 @@
+input
+period(13);
+
+var                       
+  test : Float;
+  ohlc4 : Float;
+  up : Float;
+  down : Float;
+  rsiCustom : Float;
+
+Begin
+  ohlc4 := ( open + high + low + close ) / 4;
+  up := MediaExpCustom(period, Highest(ohlc4 - ohlc4[1], period));
+  down := MediaExpCustom(period, -Lowest(ohlc4 - ohlc4[1], period));
+  if ( down = 0 ) then
+    begin
+      rsiCustom := 100;
+    end
+  else
+    begin
+    if ( up = 0 ) then
+      begin
+      rsiCustom := 0;
+      end
+    else 
+      begin
+        rsiCustom := 100 - (100 / (1 + up / down));
+      end;
+    end;
+  
+  Plot2(rsiCustom);
+
+  //SetPlotColor(1, clRed);
+  SetPlotColor(2, clBlue);
+End;

@@ -1,0 +1,61 @@
+//@version=2
+//KONCORDE
+study(title="Blai5 Koncorde", shorttitle="KONCORDE")
+calc_pvi() =>
+
+    sval=volume
+    pvi=(volume > volume[1]) ? nz(pvi[1]) + ((close - close[1])/close[1]) * (na(pvi[1]) ? pvi[1] : sval) : nz(pvi[1])
+
+calc_nvi() =>
+    sval=volume
+    nvi=(volume < volume[1]) ? nz(nvi[1]) + ((close - close[1])/close[1]) * (na(nvi[1]) ? nvi[1] : sval) : nz(nvi[1])
+
+calc_mfi(length) =>
+    src=hlc3
+    upper = sum(volume * (change(src) <= 0 ? 0 : src), length)
+    lower = sum(volume * (change(src) >= 0 ? 0 : src), length)
+    rsi(upper, lower)
+
+tprice=ohlc4
+lengthEMA = input(255, minval=1)
+m=input(15)
+pvi = calc_pvi()
+pvim = ema(pvi, m)
+pvimax = highest(pvim, 90)P
+pvimin = lowest(pvim, 90)
+oscp = (pvi - pvim) * 100/ (pvimax - pvimin)
+nvi =calc_nvi()
+nvim = ema(nvi, m)
+nvimax = highest(nvim, 90)
+nvimin = lowest(nvim, 90)
+azul = (nvi - nvim) * 100/ (nvimax - nvimin)
+xmf = calc_mfi(14)
+mult=input(2.0)
+basis = sma(tprice, 25)
+dev = mult * stdev(tprice, 25)
+upper = basis + dev
+lower = basis - dev
+OB1 = (upper + lower) / 2.0
+OB2 = upper - lower
+BollOsc = ((tprice - OB1) / OB2 ) * 100
+xrsi = rsi(tprice, 14)
+calc_stoch(src, length,smoothFastD ) =>
+    ll = lowest(low, length)
+    hh = highest(high, length)
+    k = 100 * (src - ll) / (hh - ll)
+    sma(k, smoothFastD)
+
+stoc = calc_stoch(tprice, 21, 3)
+marron = (xrsi + xmf + BollOsc + (stoc / 3))/2
+verde = marron + oscp
+media = ema(marron,m)
+
+plot(verde, color=#66FF66, style=area, title="verde")
+plot(marron, color= #FFCC99, style=area, title="marron", transp=0)
+plot(azul, color=#00FFFF, style=area, title="azul")
+plot(marron, color=maroon, style=line, linewidth=2, title="lmarron")
+plot(verde, color=#006600, style=line, linewidth=2, title="lineav")
+plot(azul, color=#000066, style=line, linewidth=2, title="lazul")
+plot(media, color=red, title="media", style=line, linewidth=2)
+hline(0,color=black,linestyle=solid)
+
