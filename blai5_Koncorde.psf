@@ -1,0 +1,49 @@
+// version: 1.0
+// author: João Gustavo Campos Soares
+
+input
+  periodo(14);
+  tipo_rsi(0);
+var
+  fBoolUpper : Float;
+  fBoolLower : Float;
+  OB1        : Float;
+  OB2        : Float;
+  BollOsc    : Float;
+  xmf        : Float;
+  xrsi       : Float;
+  stoc       : Float;
+  marron     : Float;
+  verde      : Float;
+  oscp       : Float;
+  avg      : Float;
+Inicio
+  xrsi := RSI(periodo,tipo_rsi);
+  xmf := MoneyFlowIndex(periodo);
+  fBoolUpper := BollingerBands(2.0,20,0)|0|;
+  fBoolLower := BollingerBands(2.0,20,0)|1|;
+  OB1 := (fBoolUpper + fBoolLower) / 2.0;
+  OB2 := fBoolUpper - fBoolLower;
+  stoc := SlowStochastic(21);
+  Se (OB2 >= 0) e (OB2 < 1) então
+    Inicio
+      OB2 := 1;
+    Fim;
+  Se (OB2 < 0) e (OB2 > - 1) então
+    Inicio
+      OB2 := - 1;
+    Fim;
+  BollOsc := ((WeightedClose - OB1) / OB2) * 100;
+  oscp := PercentChange(WeightedClose,15) * 10000.0;
+  marron := (xrsi + xmf + BollOsc + (stoc / 3.0)) / 2.0;
+  verde := marron + oscp;
+  avg := xAverage(marron,15);
+  Plot(0);
+  Plot2(marron);
+  Plot3(verde);
+  Plot4(avg);
+  SetPlotColor(1,clBranco);
+  SetPlotColor(2,clAmarelo);
+  SetPlotColor(3,clVerde);
+  SetPlotColor(4,clVermelho);
+Fim;
