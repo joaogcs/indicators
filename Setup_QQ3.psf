@@ -16,7 +16,7 @@ var
   // multp := 1.0;
   // stopLoss := multp * 5.0;
   // takeProfit := multp * 5.0;
-  // offset := multp + 4;
+  // offset := multp + 3;
 begin
   multp := 1.0;
   stopLoss := 5.0;
