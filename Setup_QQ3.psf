@@ -1,4 +1,5 @@
 //////////////////////Código para Estratégia de Execução - PFR + Estocástico Lento - Compra e venda //////////////////
+// Setup 3R
 var
   stopLoss   : Float;
   takeProfit : Float;
@@ -6,63 +7,79 @@ var
   mme        : Float;
   offset     : Float;
   multp      : Float;
-  // Setup Rápido 60%, 8 loss consecutivos
-  // 2R
-  // stopLoss := 2;     * 2 ?
-  // takeProfit := 2;
-  // offset := 1.0;
-
-  // 4R
-  // multp := 1.0;
-  // stopLoss := multp * 5.0;
-  // takeProfit := multp * 5.0;
-  // offset := multp + 3;
 begin
   multp := 1.0;
-  stopLoss := 5.0;
-  takeProfit := 5.0;
-  offset := 3.0;
+  stopLoss := 2.5;
+  takeProfit := 2.5;
+  offset := 1.0;
   mma := Media(3,Close[1]);
   mme := MediaExp(28,Close);
-  If (BuyPosition = 0) and (SellPosition = 0) and (time < 1000) then
+  If (BuyPosition = 0) and (SellPosition = 0) and (time > 0902) and (time < 1600) then
     begin
-      Se (Close[1] > Open[1]) e (mma >= mme) e (Open > mma) e (Close > mma) then
+      Se (mma >= mme) e (Open >= mma) then
         inicio
-          //SendOrder(osBuy, otLimit, 1, mma[1], mma[1]);
-          BuyLimit(mma + offset,1);
-          PaintBar(clGreen);
-          Alert(clGreen);
-          SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
-          SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
-        fim
-      senão 
-        inicio
-          if (HasPendingOrders) then
-            CancelPendingOrders;
+          if (close > mma) then
+            inicio
+              //SendOrder(osBuy, otLimit, 1, mma[1], mma[1]);
+              //SellShortLimit(open + offset,1);
+              BuyLimit(open + offset,1);
+              PaintBar(clGreen);
+              Alert(clGreen);
+              //SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+              //SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+            fim
+          else
+            inicio
+              //SendOrder(osBuy, otLimit, 1, mma[1], mma[1]);
+              SellShortLimit(open - offset,1);
+              //BuyLimit(open + offset,1);
+              PaintBar(clPurple);
+              Alert(clPurple);
+              //SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+              //SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+            fim;
+
         fim;
-      Se (Close[1] < Open[1]) e (mma < mme) e (Open < mma) e (Close < mma) then
+      //senão 
+      //  inicio
+      //    if (HasPendingOrders) then
+      //      CancelPendingOrders;
+      //  fim;
+      Se (mma <= mme) e (Open <= mma) then
         inicio
-          SellShortLimit(mma - offset,1);
-          Alert(clRed);
-          PaintBar(clRed);
-          BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
-          BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
-        fim
-      senão 
-        inicio
-          if (HasPendingOrders) then
-            CancelPendingOrders;
+          if (close < mma) then
+            inicio
+              SellShortLimit(open - offset,1);
+              Alert(clRed);
+              PaintBar(clRed);
+              //BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+              //BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
+            fim
+          else
+            inicio
+              BuyLimit(open + offset,1);
+              Alert(clYellow);
+              PaintBar(clYellow);
+              //BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+              //BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
+            fim;
+
         fim;
+      //senão 
+      //  inicio
+      //    if (HasPendingOrders) then
+      //      CancelPendingOrders;
+      //  fim;
     end;
   Se (SellPosition = 1) then
     inicio
       BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
-      BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
+      BuyToCoverLimit(SellPrice - takeProfit);
     end;
   Se (BuyPosition = 1) then
     inicio
       SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
-      SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+      SellToCoverLimit(BuyPrice + takeProfit);
     end;
 
   //Se (SlowStochastic(8)[1] > 80) e (SlowStochastic(8) < 80) then
