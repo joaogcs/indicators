@@ -1,0 +1,74 @@
+//////////////////////Código para Estratégia de Execução - PFR + Estocástico Lento - Compra e venda //////////////////
+var
+  stopLoss   : Float;
+  takeProfit : Float;
+  mma        : Float;
+  mme        : Float;
+  offset     : Float;
+  multp      : Float;
+  // Setup Rápido 60%, 8 loss consecutivos
+  // 2R
+  // stopLoss := 2;     * 2 ?
+  // takeProfit := 2;
+  // offset := 1.0;
+
+  // 4R
+  // multp := 1.0;
+  // stopLoss := multp * 5.0;
+  // takeProfit := multp * 5.0;
+  // offset := multp + 4;
+begin
+  multp := 1.0;
+  stopLoss := 5.0;
+  takeProfit := 5.0;
+  offset := 3.0;
+  mma := Media(3,Close[1]);
+  mme := MediaExp(28,Close);
+  If (BuyPosition = 0) and (SellPosition = 0) and (time < 1000) then
+    begin
+      Se (Close[1] > Open[1]) e (mma >= mme) e (Open > mma) e (Close > mma) then
+        inicio
+          //SendOrder(osBuy, otLimit, 1, mma[1], mma[1]);
+          BuyLimit(mma + offset,1);
+          PaintBar(clGreen);
+          Alert(clGreen);
+          SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+          SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+        fim
+      senão 
+        inicio
+          if (HasPendingOrders) then
+            CancelPendingOrders;
+        fim;
+      Se (Close[1] < Open[1]) e (mma < mme) e (Open < mma) e (Close < mma) then
+        inicio
+          SellShortLimit(mma - offset,1);
+          Alert(clRed);
+          PaintBar(clRed);
+          BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+          BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
+        fim
+      senão 
+        inicio
+          if (HasPendingOrders) then
+            CancelPendingOrders;
+        fim;
+    end;
+  Se (SellPosition = 1) then
+    inicio
+      BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+      BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
+    end;
+  Se (BuyPosition = 1) then
+    inicio
+      SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+      SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+    end;
+
+  //Se (SlowStochastic(8)[1] > 80) e (SlowStochastic(8) < 80) then
+  //  SellToCoverAtMarket;
+  //Se (SlowStochastic(8)[1] < 20) e (SlowStochastic(8) > 20) then
+  //  BuyToCoverAtMarket;
+  Plot(mma);
+  Plot2(mme);
+end;
