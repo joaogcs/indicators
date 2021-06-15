@@ -1,5 +1,9 @@
 //////////////////////Código para Estratégia de Execução - PFR + Estocástico Lento - Compra e venda //////////////////
-// Setup para Mini Dolar 3R
+// Setupe para Mini Dolar 3R
+parametro
+  //horario_de_inicio(0958);
+  horario_de_inicio(0900);
+  horario_de_fim(1030);
 var
   stopLoss   : Float;
   takeProfit : Float;
@@ -9,12 +13,12 @@ var
   multp      : Float;
 begin
   multp := 1.0;
-  stopLoss := 2.5;
-  takeProfit := 2.5;
+  stopLoss := 2.0;
+  takeProfit := 2.0;
   offset := 1.0;
   mma := Media(3,Close[1]);
   mme := MediaExp(28,Close);
-  If (BuyPosition = 0) and (SellPosition = 0) and (time > 0958) and (time < 1030) then
+  If (BuyPosition = 0) and (SellPosition = 0) and (time > horario_de_inicio) and (time < horario_de_fim) then
     begin
       Se (mma >= mme) e (Open >= mma) then
         inicio
@@ -32,11 +36,6 @@ begin
               Alert(clPurple);
             fim;
         fim;
-      //senão
-      //  inicio
-      //    if (HasPendingOrders) then
-      //      CancelPendingOrders;
-      //  fim;
       Se (mma <= mme) e (Open <= mma) then
         inicio
           if (close < mma) then
@@ -53,26 +52,16 @@ begin
               PaintBar(clYellow);
             fim;
         fim;
-      //senão
-      //  inicio
-      //    if (HasPendingOrders) then
-      //      CancelPendingOrders;
-      //  fim;
-      end;
-      Se (SellPosition = 1) then
-        inicio
-          BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
-          BuyToCoverLimit(SellPrice - takeProfit);
-        end;
-      Se (BuyPosition = 1) then
-        inicio
-          SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
-          SellToCoverLimit(BuyPrice + takeProfit);
-        end;
-      //Se (SlowStochastic(8)[1] > 80) e (SlowStochastic(8) < 80) then
-      //  SellToCoverAtMarket;
-      //Se (SlowStochastic(8)[1] < 20) e (SlowStochastic(8) > 20) then
-      //  BuyToCoverAtMarket;
-      Plot(mma);
-      Plot2(mme);
     end;
+  Se (SellPosition = 1) then
+    inicio
+      BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+      BuyToCoverLimit(SellPrice - takeProfit);
+    end;
+  Se (BuyPosition = 1) then
+    inicio
+      SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+      SellToCoverLimit(BuyPrice + takeProfit);
+    end;Plot(mma);
+  Plot2(mme);
+end;
