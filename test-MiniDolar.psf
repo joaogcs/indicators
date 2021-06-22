@@ -64,55 +64,47 @@ Inicio
   avg := xAverage(marron,15);
   If (time > horario_de_inicio) and (time < horario_de_fim) then
     begin
-      Se (avg <> marron) and (fMACD > 5.0) and (f1MACD > 5.0) and (verde > avg) and (verde > marron) then
+      Se (avg <> marron) and (fMACD > 3.0) and (f1MACD > 0.0) and (verde > avg) and (verde > marron) and (AccAgressSaldo(0) > 0) and (AccuDistr > 0) then
         inicio
+          if (SellPosition = 1) then
+            begin
+              BuyToCoverAtMarket;
+              Alert(clVerde);
+            end;
           se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
             inicio
               BuyAtMarket(1);
-              cache := Close;
-              PaintBar(clVerde);
-           
               //BuyStop(BuyPrice, BuyPrice);
               fim;
-              if (SellPosition = 1) then
-              begin
-                BuyToCoverAtMarket;
-                
-                Alert(clVerde);
-              end;
-              
-              
+              PaintBar(clVerde);
             fim
-          else if (avg <> marron) and (fMACD < 5.0) and (f1MACD < 5.0) and (verde < avg) and (verde < marron) then
+          else if (avg <> marron) and (fMACD < -3.0) and (f1MACD < 0.0) and (verde < avg) and (verde < marron) and (AccAgressSaldo(0) < 0) and (AccuDistr < 0) then
             inicio
+              if (BuyPosition = 1) then
+                begin
+                  Alert(clPurple);
+                  SellShortAtMarket;
+                end;
               se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
                 inicio
                   SellShortAtMarket(1);
-                  
                   //SellShortStop(AskPrice, AskPrice-2);
                   fim;
-                  if (BuyPosition = 1) then
-                  begin
-                    Alert(clPurple);
-                    SellShortAtMarket;
-                    cache := Close;
-                  end;
                   PaintBar(clPurple);
-                  
                 fim
               else 
                 inicio
                   Paintbar(clBlue);
                   if (SellPosition = 1) then
                     begin
-                    BuyAtMarket;
-                    Alert(clVerde);
+                      BuyAtMarket;
+                      Alert(clVerde);
                     end;
                   if (BuyPosition = 1) then
-                  begin
-                    SellShortAtMarket;
-                    Alert(clPurple);
-                  end;
+                    begin
+                      SellShortAtMarket;
+                      Alert(clPurple);
+                    end;
                 fim;
             end;
           Se (SellPosition = 1) then
@@ -127,10 +119,10 @@ Inicio
                   fim;
                   se (time >= horario_de_fim) então
                     ClosePosition;
-                  Plot(cache);
-                  //Plot2(SellPrice);
-                  //Plot3(verde);
-                  //Plot4(avg);
+                  Plot(0.0);
+                  Plot2(marron);
+                  Plot3(verde);
+                  Plot4(AccuDistr);
                   SetPlotColor(1,clBranco);
                   SetPlotColor(2,clAmarelo);
                   setPlotColor(3,clVerde);
