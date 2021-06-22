@@ -1,67 +1,125 @@
-//////////////////////Código para Estratégia de Execução - PFR + Estocástico Lento - Compra e venda //////////////////
-// Setupe para Mini Dolar 3R
-parametro
-  //horario_de_inicio(0958);
-  horario_de_inicio(0900);
-  horario_de_fim(1030);
+input
+  periodo(14);
+  tipo_rsi(0);
+  horario_de_inicio(0902);
+  horario_de_fim(1730);
 var
+  fBoolUpper : Float;
+  fBoolLower : Float;
+  OB1        : Float;
+  OB2        : Float;
+  BollOsc    : Float;
+  xmf        : Float;
+  xrsi       : Float;
+  stoc       : Float;
+  marron     : Float;
+  verde      : Float;
+  oscp       : Float;
+  avg        : Float;
   stopLoss   : Float;
   takeProfit : Float;
-  mma        : Float;
-  mme        : Float;
-  offset     : Float;
-  multp      : Float;
-begin
-  multp := 1.0;
-  stopLoss := 2.0;
-  takeProfit := 2.0;
-  offset := 1.0;
-  mma := Media(3,Close[1]);
-  mme := MediaExp(28,Close);
-  If (BuyPosition = 0) and (SellPosition = 0) and (time > horario_de_inicio) and (time < horario_de_fim) then
+  nValue1    : Float;
+  nValue2    : Float;
+  nFish      : Float;
+  div        : Float;
+  fMACD      : Float;
+Inicio
+  stopLoss := 15.0;
+  takeProfit := 15.0;
+  xrsi := RSI(periodo,tipo_rsi);
+  xmf := MoneyFlowIndex(periodo);
+  fBoolUpper := BollingerBands(2.0,20,0)|0|;
+  fBoolLower := BollingerBands(2.0,20,0)|1|;
+  OB1 := (fBoolUpper + fBoolLower) / 2.0;
+  OB2 := fBoolUpper - fBoolLower;
+  stoc := SlowStochastic(21);
+  fMACD := MACD(26,12,9)|1|;
+  Se (Highest(MedianPrice,10) - Lowest(MedianPrice,10) = 0) então
+    div := 1
+  senão 
+    div := Highest(MedianPrice,10) - Lowest(MedianPrice,10);
+  nValue1 := 0.33 * 2 * ((MedianPrice - Lowest(MedianPrice,10)) / (div) - 0.5) + 0.67 * nValue1[1];
+  Se (nValue1 > 0.99) então
+    nValue2 := 0.999
+  senão Se (nValue1 < - 0.99) então
+    nValue2 := - 0.999
+  senão 
+    nValue2 := nValue1;
+  nFish := (0.5 * log((1.0 + nValue2) / (1.0 - nValue2)) + 0.5 * nFish[1]) * 1.99;
+  Se (OB2 >= 0) e (OB2 < 1) então
+    Inicio
+      OB2 := 1;
+    Fim;
+  Se (OB2 < 0) e (OB2 > - 1) então
+    Inicio
+      OB2 := - 1;
+    Fim;BollOsc := ((WeightedClose - OB1) / OB2) * 100;
+  oscp := PercentChange(Close,15) * 10000.0;
+  marron := (xrsi + xmf + BollOsc + (stoc / 3.0)) / 2.0;
+  verde := marron + oscp;
+  avg := xAverage(marron,15);
+  If (time > horario_de_inicio) and (time < horario_de_fim) then
     begin
-      Se (mma >= mme) e (Open >= mma) then
+      Se (avg < marron) e (fMACD > 0.0) and (verde > avg) then
         inicio
-          if (close > mma) then
+          se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
             inicio
               BuyAtMarket(1);
-              //BuyLimit(open + offset);
-              PaintBar(clGreen);
-              Alert(clGreen);
+              //BuyStop(BuyPrice, BuyPrice);
+              fim;
+              if (SellPosition = 1) then
+                BuyToCoverAtMarket;
+              Plot(BuyPrice);
+              PaintBar(clVerde);
+              Alert(clVerde);
             fim
-          else 
+          else if (avg > marron) e (fMACD < 0.0) and (verde < avg) then
             inicio
-              SellShortLimit(open[1] - offset);
-              PaintBar(clPurple);
-              Alert(clPurple);
+              se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
+                inicio
+                  SellShortAtMarket(1);
+                  //SellShortStop(AskPrice, AskPrice-2);
+                  fim;
+                  if (BuyPosition = 1) then
+                    SellShortAtMarket;
+                  Plot2(SellPrice);
+                  PaintBar(clPurple);
+                  Alert(clPurple);
+                fim
+              else 
+                inicio
+                  Paintbar(clBlue);
+                  if (SellPosition = 1) then
+                    BuyAtMarket;
+                  if (BuyPosition = 1) then
+                    SellShortAtMarket;
+                fim;
+            end;
+          Se (SellPosition = 1) then
+            inicio
+              BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
+              //BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
             fim;
-        fim;
-      Se (mma <= mme) e (Open <= mma) then
-        inicio
-          if (close < mma) then
+          Se (BuyPosition = 1) then
             inicio
-              SellShortAtMarket(1);
-              //SellShortLimit(open[1] - offset);
-              Alert(clRed);
-              PaintBar(clRed);
-            fim
-          else 
-            inicio
-              BuyLimit(open[1] + offset);
-              Alert(clYellow);
-              PaintBar(clYellow);
+              SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+              //SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
             fim;
-        fim;
-    end;
-  Se (SellPosition = 1) then
-    inicio
-      BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
-      BuyToCoverLimit(SellPrice - takeProfit);
-    end;
-  Se (BuyPosition = 1) then
-    inicio
-      SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
-      SellToCoverLimit(BuyPrice + takeProfit);
-    end;Plot(mma);
-  Plot2(mme);
-end;
+          se (time >= horario_de_fim) então
+            ClosePosition;
+          //Plot(0);
+          //Plot2(marron);
+          //Plot3(verde);
+          //Plot4(avg);
+          SetPlotColor(1,clBranco);
+          SetPlotColor(2,clAmarelo);
+          setPlotColor(3,clVerde);
+          SetPlotColor(4,clAzul);
+        Fim;
+
+
+
+
+
+
+
