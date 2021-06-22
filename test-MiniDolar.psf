@@ -64,7 +64,7 @@ Inicio
   avg := xAverage(marron,15);
   If (time > horario_de_inicio) and (time < horario_de_fim) then
     begin
-      Se (avg <> marron) and (fMACD > 0.0) and (f1MACD > 0.0) and (verde > marron) then
+      Se (avg <> marron) and (fMACD > 5.0) and (f1MACD > 5.0) and (verde > avg) and (verde > marron) then
         inicio
           se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
             inicio
@@ -83,7 +83,7 @@ Inicio
               
               
             fim
-          else if (avg <> marron) and (fMACD < 0.0) and (f1MACD < 0.0) and (verde < marron) then
+          else if (avg <> marron) and (fMACD < 5.0) and (f1MACD < 5.0) and (verde < avg) and (verde < marron) then
             inicio
               se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
                 inicio
