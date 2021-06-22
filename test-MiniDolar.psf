@@ -1,10 +1,9 @@
-// WDOFUT 26N 60,71 % Max de 3 Loss seguidos //
-
+// WDOFUT 21N 58,82 % Max de 3 Loss seguidos //
 input
   periodo(14);
   tipo_rsi(0);
   horario_de_inicio(0902);
-  horario_de_fim(1730);
+  horario_de_fim(1700);
 var
   fBoolUpper : Float;
   fBoolLower : Float;
@@ -26,9 +25,10 @@ var
   div        : Float;
   fMACD      : Float;
   f1MACD     : Float;
+  cache      : Float;
 Inicio
   stopLoss := 15.0;
-  takeProfit := 15.0;
+  takeProfit := 20.0;
   xrsi := RSI(periodo,tipo_rsi);
   xmf := MoneyFlowIndex(periodo);
   fBoolUpper := BollingerBands(2.0,20,0)|0|;
@@ -36,8 +36,8 @@ Inicio
   OB1 := (fBoolUpper + fBoolLower) / 2.0;
   OB2 := fBoolUpper - fBoolLower;
   stoc := SlowStochastic(21);
-  fMACD := MACD(26,12,9)|0|;
-  f1MACD := MACD(26,12,9)|1|;
+  fMACD := MACD(26,16,9)|0|;
+  f1MACD := MACD(26,16,9)|1|;
   Se (Highest(MedianPrice,10) - Lowest(MedianPrice,10) = 0) então
     div := 1
   senão 
@@ -64,65 +64,75 @@ Inicio
   avg := xAverage(marron,15);
   If (time > horario_de_inicio) and (time < horario_de_fim) then
     begin
-      Se (avg < marron) e (fMACD > 0.0)  and (f1MACD > 0.0) and (verde > avg) then
+      Se (avg <> marron) and (fMACD > 0.0) and (f1MACD > 0.0) and (verde > marron) then
         inicio
           se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
             inicio
               BuyAtMarket(1);
+              cache := Close;
+              PaintBar(clVerde);
+           
               //BuyStop(BuyPrice, BuyPrice);
               fim;
               if (SellPosition = 1) then
+              begin
                 BuyToCoverAtMarket;
-              Plot(BuyPrice);
-              PaintBar(clVerde);
-              Alert(clVerde);
+                
+                Alert(clVerde);
+              end;
+              
+              
             fim
-          else if (avg > marron) e (fMACD < 0.0) and (f1MACD < 0.0) and (verde < avg) then
+          else if (avg <> marron) and (fMACD < 0.0) and (f1MACD < 0.0) and (verde < marron) then
             inicio
               se (BuyPosition = 0) e (SellPosition = 0) e não (HasPendingOrders) então
                 inicio
                   SellShortAtMarket(1);
+                  
                   //SellShortStop(AskPrice, AskPrice-2);
                   fim;
                   if (BuyPosition = 1) then
+                  begin
+                    Alert(clPurple);
                     SellShortAtMarket;
-                  Plot2(SellPrice);
+                    cache := Close;
+                  end;
                   PaintBar(clPurple);
-                  Alert(clPurple);
+                  
                 fim
               else 
                 inicio
                   Paintbar(clBlue);
                   if (SellPosition = 1) then
+                    begin
                     BuyAtMarket;
+                    Alert(clVerde);
+                    end;
                   if (BuyPosition = 1) then
+                  begin
                     SellShortAtMarket;
+                    Alert(clPurple);
+                  end;
                 fim;
             end;
           Se (SellPosition = 1) then
             inicio
               BuyToCoverStop(SellPrice + stopLoss,SellPrice + stopLoss);
               //BuyToCoverStop(SellPrice - takeProfit,SellPrice - takeProfit);
-            fim;
-          Se (BuyPosition = 1) then
-            inicio
-              SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
-              //SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
-            fim;
-          se (time >= horario_de_fim) então
-            ClosePosition;
-          //Plot(0);
-          //Plot2(marron);
-          //Plot3(verde);
-          //Plot4(avg);
-          SetPlotColor(1,clBranco);
-          SetPlotColor(2,clAmarelo);
-          setPlotColor(3,clVerde);
-          SetPlotColor(4,clAzul);
-        Fim;
-
-
-
-
-
-
+              fim;
+              Se (BuyPosition = 1) then
+                inicio
+                  SellToCoverStop(BuyPrice - stopLoss,BuyPrice - stopLoss);
+                  //SellToCoverStop(BuyPrice + takeProfit,BuyPrice + takeProfit);
+                  fim;
+                  se (time >= horario_de_fim) então
+                    ClosePosition;
+                  Plot(cache);
+                  //Plot2(SellPrice);
+                  //Plot3(verde);
+                  //Plot4(avg);
+                  SetPlotColor(1,clBranco);
+                  SetPlotColor(2,clAmarelo);
+                  setPlotColor(3,clVerde);
+                  SetPlotColor(4,clAzul);
+                Fim;
