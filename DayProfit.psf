@@ -1,0 +1,51 @@
+Input
+  TakeProfit(10);
+  StopLoss(10);
+
+  DayStop(20);
+  DayProfit(20);
+Var
+  Stop            : Float;
+  PositionPrice   : Float;
+  DayResult       : Float;
+  BuyP            : Float;
+  OnClosePosition : Boolean;
+Inicio
+  Se (Date <> LastCalcDate) então
+    Inicio
+      DayResult := 0;
+    Fim
+  Senão 
+    Inicio
+      Se (OnClosePosition = True) então
+        Inicio
+          OnClosePosition := False;
+          Se (High > BuyP + TakeProfit) então
+            Inicio
+              DayResult := DayResult + TakeProfit;
+            Fim
+          Senão if (Low < BuyP - StopLoss) então
+            DayResult := DayResult - StopLoss;
+        Fim;
+      Se (time >= 0910) e (time <= 1700) e (DayResult < DayProfit) e (DayResult > - DayStop) então
+        Inicio
+          Se (IsBought) então
+            Inicio
+              SellToCoverStop(BuyPrice + TakeProfit,BuyPrice + TakeProfit);
+              SellToCoverStop(Stop,Stop);
+              Se (High > BuyPrice + TakeProfit) ou (Low < BuyPrice - StopLoss) então
+                OnClosePosition := True;
+            Fim
+          Senão 
+            Inicio
+              BuyAtMarket;
+              Stop := (BuyPrice - StopLoss);
+              BuyP := BuyPrice;
+            Fim;
+        Fim
+      Senão 
+        Inicio
+          ClosePosition;
+        Fim;
+    Fim;Plot(DayResult);
+Fim;
