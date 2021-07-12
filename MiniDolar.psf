@@ -1,4 +1,4 @@
-// WDOFUT 21N 58,82 % Max de 3 Loss seguidos //
+// WDOFUT 30N //
 input
   periodo(14);
   tipo_rsi(0);
